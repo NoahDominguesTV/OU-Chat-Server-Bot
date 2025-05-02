@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OU Assistant Bot Status</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .status-indicator { height: 12px; width: 12px; border-radius: 50%; display: inline-block; }
+    .status-online { background-color: #10b981; }
+    .status-offline { background-color: #ef4444; }
+    .status-degraded { background-color: #f59e0b; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div class="container mx-auto p-6 max-w-3xl">
+    <h1 class="text-3xl font-bold mb-6">OU Assistant Bot Status</h1>
+    
+    <div id="status-container" class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <div class="flex items-center">
+        <div id="status-indicator" class="status-indicator mr-2 status-offline"></div>
+        <span id="status-text" class="font-semibold">Loading...</span>
+      </div>
+    </div>
+    
+    <div class="grid gap-6 md:grid-cols-2">
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Bot Information</h2>
+        <ul class="space-y-2" id="bot-stats">
+          <li class="flex justify-between">
+            <span class="text-gray-600">Uptime:</span>
+            <span id="uptime">Loading...</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Error Rate:</span>
+            <span id="error-rate">Loading...</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Servers:</span>
+            <span id="servers">Loading...</span>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Member Stats</h2>
+        <ul class="space-y-2">
+          <li class="flex justify-between">
+            <span class="text-gray-600">Total Members:</span>
+            <span id="members-total">Loading...</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Online Members:</span>
+            <span id="members-online">Loading...</span>
+          </li>
+          <li class="flex justify-between">
+            <span class="text-gray-600">Commands Used:</span>
+            <span id="commands-total">Loading...</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="mt-6 text-center text-sm text-gray-500">
+      <p>Last Updated: <span id="last-updated">Never</span></p>
+    </div>
+  </div>
+  
+  <script>
+    // Replace with your actual backend URL
+    const API_URL = 'https://your-hosted-backend.com/api/status';
+    
+    function updateStatus() {
+      fetch(API_URL)
+        .then(response => response.json())
+        .then(data => {
+          // Update status indicator
+          const statusIndicator = document.getElementById('status-indicator');
+          const statusText = document.getElementById('status-text');
+          
+          if (data.connected) {
+            if (data.error_rate > 5) {
+              statusIndicator.className = 'status-indicator mr-2 status-degraded';
+              statusText.textContent = 'Degraded';
+            } else {
+              statusIndicator.className = 'status-indicator mr-2 status-online';
+              statusText.textContent = 'Operational';
+            }
+          } else {
+            statusIndicator.className = 'status-indicator mr-2 status-offline';
+            statusText.textContent = 'Offline';
+          }
+          
+          // Update other stats
+          document.getElementById('uptime').textContent = data.uptime;
+          document.getElementById('error-rate').textContent = data.error_rate + '%';
+          document.getElementById('servers').textContent = data.guilds;
+          
+          if (data.members) {
+            document.getElementById('members-total').textContent = data.members.total;
+            document.getElementById('members-online').textContent = data.members.online;
+          }
+          
+          if (data.commands) {
+            document.getElementById('commands-total').textContent = data.commands.total;
+          }
+          
+          document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+        })
+        .catch(error => {
+          console.error('Error fetching status:', error);
+          document.getElementById('status-indicator').className = 'status-indicator mr-2 status-offline';
+          document.getElementById('status-text').textContent = 'Connection Error';
+        });
+    }
+    
+    // Update immediately and then every 30 seconds
+    updateStatus();
+    setInterval(updateStatus, 30000);
+  </script>
+</body>
+</html>
